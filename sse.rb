@@ -1,6 +1,8 @@
 require 'goliath'
 
-class EventGenerator < Goliath::API
+class SSE < Goliath::API
+  use Rack::Static, :urls => ["/index.html"], :root => Goliath::Application.app_path("public")
+
   def response(env)
     EM.add_periodic_timer(1) do
       env.stream_send("data:hello ##{rand(100)}\n\n")
@@ -12,8 +14,4 @@ class EventGenerator < Goliath::API
 
     streaming_response(200, {'Content-Type' => 'text/event-stream'})
   end
-end
-
-class SSE < Goliath::API
-  # TODO: Match routes and send events to clients
 end
