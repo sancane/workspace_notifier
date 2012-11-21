@@ -1,30 +1,18 @@
 require 'goliath'
-require 'grape'
 
-class MyAPI < Grape::API
+class Workspace < Goliath::API
+  use Rack::Static, :root => Goliath::Application.app_path("public")
 
-  version 'v1', :using => :path
-
-  resource 'workspace' do
-    get "/:id" do
-      pt = EM.add_periodic_timer(1) do
-       env.stream_send("data:hello ##{params['id']}\n\n")
-      end
-
-      EM.add_periodic_timer(3) do
-        pt.cancel
-
-        env.stream_send("!! BOOM !!\n")
-        env.stream_close
-      end
-    end
-  end
-end
-
-class SSE < Goliath::API
   def response(env)
-    MyAPI.call(env)
-    [200, {}, Goliath::Response::STREAMING]
-  end
+    pt = EM.add_periodic_timer(1) do
+      env.stream_send("data:hello ##{rand(100)}\n\n")
+    end
 
+    EM.add_periodic_timer(5) do
+      pt.cancel
+      env.stream_send(["event:signup", "data:signup event ##{rand(100)}\n\n"].join("\n"))
+      env.stream_close
+    end
+    streaming_response(200, {'Content-Type' => 'text/event-stream'})
+  end
 end
