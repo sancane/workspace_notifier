@@ -1,7 +1,10 @@
 require 'goliath'
 
 class Workspace < Goliath::API
-  use Rack::Static, :root => Goliath::Application.app_path("public")
+  use Goliath::Rack::Validation::RequestMethod, %w(GET) # allow GET requests only
+
+  use Rack::Static, :urls => ["/index.html"],
+                      :root => Goliath::Application.app_path("public")
 
   def response(env)
     pt = EM.add_periodic_timer(1) do
