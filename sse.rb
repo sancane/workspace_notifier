@@ -1,7 +1,12 @@
 require 'goliath'
 
 class Workspace < Goliath::API
-  use Goliath::Rack::Validation::RequestMethod, %w(GET) # allow GET requests only
+  use Goliath::Rack::Params
+  use Goliath::Rack::Validation::RequestMethod, %w(GET)
+  use Goliath::Rack::Validation::RequiredParam, {:key => 'workspace'}
+  use Goliath::Rack::Validation::Param, :key => 'workspace',
+                                  :as => Goliath::Rack::Types::Integer,
+                                  :message => "Workspace needs to be an Integer"
 
   use Rack::Static, :urls => ["/index.html"],
                       :root => Goliath::Application.app_path("public")
