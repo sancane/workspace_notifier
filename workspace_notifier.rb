@@ -23,15 +23,16 @@ class WorkspaceNotifier < Goliath::API
   end
 
   def response(env)
-    VirtualMachine.find_all_by_workspace_id(params['workspace']).each do |vm|
-      env.logger.info("VM: #{vm.name}")
+    workspace = params['workspace']
+    pt = EM.add_periodic_timer(2) do
+      EventMachine.synchrony do
+        VirtualMachine.find_all_by_workspace_id(workspace).each do |vm|
+          env.stream_send("data:#{vm.name} ##{vm.state}\n\n")
+        end
+      end
     end
 
-    pt = EM.add_periodic_timer(1) do
-      env.stream_send("data:hello ##{rand(100)}\n\n")
-    end
-
-    EM.add_periodic_timer(5) do
+    EM.add_periodic_timer(8) do
       pt.cancel
       env.stream_send(["event:signup", "data:signup event ##{rand(100)}\n\n"].join("\n"))
       env.stream_close
