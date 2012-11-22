@@ -14,6 +14,10 @@ class WorkspaceNotifier < Goliath::API
   use Rack::Static, :urls => ["/index.html"],
                       :root => Goliath::Application.app_path("public")
 
+  def on_close(env)
+    env.logger.info "TODO: Close connection."
+  end
+
   def response(env)
     env.logger.info("----->: #{env.params}")
 
