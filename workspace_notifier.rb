@@ -11,9 +11,9 @@ class WorkspaceNotifier < Goliath::API
   use Goliath::Rack::Tracer
   use Goliath::Rack::DefaultMimeType
   use Goliath::Rack::Validation::RequestMethod, %w(GET)
-  use Goliath::Rack::Validation::RequiredParam, {:key => 'workspace'}
-  use Goliath::Rack::Validation::Param, :key => 'workspace', :as => Integer,
-                                  :message => "Workspace needs to be an Integer"
+  use Goliath::Rack::Validation::RequiredParam, {:key => 'id'}
+  use Goliath::Rack::Validation::Param, :key => 'id', :as => Integer,
+                                  :message => "Id needs to be an Integer"
 
   use Rack::Static, :urls => ["/index.html"],
                       :root => Goliath::Application.app_path("public")
@@ -23,10 +23,10 @@ class WorkspaceNotifier < Goliath::API
   end
 
   def response(env)
-    workspace = params['workspace']
+    id = params['id']
     pt = EM.add_periodic_timer(2) do
       EventMachine.synchrony do
-        VirtualMachine.find_all_by_workspace_id(workspace).each do |vm|
+        VirtualMachine.find_all_by_workspace_id(id).each do |vm|
           env.stream_send("data:#{vm.name} ##{vm.state}\n\n")
         end
       end
