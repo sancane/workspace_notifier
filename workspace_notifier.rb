@@ -1,4 +1,8 @@
 require 'goliath'
+require 'em-synchrony/activerecord'
+
+class User < ActiveRecord::Base
+end
 
 class WorkspaceNotifier < Goliath::API
   include Goliath::Rack::Types
@@ -19,6 +23,10 @@ class WorkspaceNotifier < Goliath::API
   end
 
   def response(env)
+    User.all.each do |user|
+      env.logger.info("-------------------#{user.first_name}")
+    end
+
     env.logger.info("----->: #{env.params}")
 
     pt = EM.add_periodic_timer(1) do
