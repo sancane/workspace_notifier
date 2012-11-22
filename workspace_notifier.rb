@@ -1,9 +1,11 @@
 require 'goliath'
 
-class Workspace < Goliath::API
+class WorkspaceNotifier < Goliath::API
   include Goliath::Rack::Types
 
   use Goliath::Rack::Params
+  use Goliath::Rack::Tracer
+  use Goliath::Rack::DefaultMimeType
   use Goliath::Rack::Validation::RequestMethod, %w(GET)
   use Goliath::Rack::Validation::RequiredParam, {:key => 'workspace'}
   use Goliath::Rack::Validation::Param, :key => 'workspace', :as => Integer,
@@ -13,6 +15,8 @@ class Workspace < Goliath::API
                       :root => Goliath::Application.app_path("public")
 
   def response(env)
+    env.logger.info("----->: #{env.params}")
+
     pt = EM.add_periodic_timer(1) do
       env.stream_send("data:hello ##{rand(100)}\n\n")
     end
