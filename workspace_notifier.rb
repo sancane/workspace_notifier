@@ -34,7 +34,7 @@ class WorkspaceNotifier < Goliath::API
         })
       end
 
-      env.stream_send("data:#{obj.to_json}\n\n")
+      env.stream_send(["event:worspace", "data:#{obj.to_json}\n\n"].join("\n"))
     end
   end
 
