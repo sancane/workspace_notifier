@@ -22,15 +22,26 @@ class WorkspaceNotifier < Goliath::API
     env.logger.info "TODO: Close connection."
   end
 
+  def send_notification(id, env)
+    EventMachine.synchrony do
+      obj = {"workspace" => id}
+      obj["nodes"] = []
+
+      VirtualMachine.find_all_by_workspace_id(id).each do |vm|
+        obj["nodes"].push({
+          "name" => vm.name,
+          "state" => vm.state
+        })
+      end
+
+      env.stream_send("data:#{obj.to_json}\n\n")
+    end
+  end
+
   def response(env)
     id = params['id']
-    pt = EM.add_periodic_timer(2) do
-      EventMachine.synchrony do
-        VirtualMachine.find_all_by_workspace_id(id).each do |vm|
-          env.stream_send("data:#{vm.name} ##{vm.state}\n\n")
-        end
-      end
-    end
+
+    pt = EM.add_periodic_timer(2) { send_notification(id, env) }
 
     EM.add_periodic_timer(8) do
       pt.cancel
