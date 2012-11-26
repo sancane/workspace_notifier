@@ -19,35 +19,42 @@ class WorkspaceNotifier < Goliath::API
                       :root => Goliath::Application.app_path("public")
 
   def on_close(env)
-    env.logger.info "TODO: Close connection."
+    env.channels[env['workspace']].unsubscribe(env['subscription'])
   end
 
-  def send_notification(id, env)
+  def send_message(id, channel)
     EventMachine.synchrony do
-      obj = {"workspace" => id}
-      obj["nodes"] = []
+      obj = {
+        "workspace" => id,
+        "nodes" => []
+      }
 
       VirtualMachine.find_all_by_workspace_id(id).each do |vm|
-        obj["nodes"].push({
+        obj['nodes'].push({
           "name" => vm.name,
           "state" => vm.state
         })
       end
 
-      env.stream_send(["event:worspace", "data:#{obj.to_json}\n\n"].join("\n"))
+      msg = ["event:worspace", "data:#{obj.to_json}\n\n"].join("\n")
+      channel << msg
     end
   end
 
   def response(env)
-    id = params['id']
+    env['workspace'] = params['id']
 
-    pt = EM.add_periodic_timer(2) { send_notification(id, env) }
-
-    EM.add_periodic_timer(8) do
-      pt.cancel
-      env.stream_send(["event:signup", "data:signup event ##{rand(100)}\n\n"].join("\n"))
-      env.stream_close
+    if not env.channels[env['workspace']]
+      env.channels[env['workspace']] = EventMachine::Channel.new
+      env.timers[env['workspace']] = EM.add_periodic_timer(2) do
+        send_message(env['workspace'], env.channels[env['workspace']])
+      end
     end
+
+    env['subscription'] = env.channels[env['workspace']].subscribe do |m|
+      env.stream_send(m)
+    end
+
     streaming_response(200, {'Content-Type' => 'text/event-stream'})
   end
 end
