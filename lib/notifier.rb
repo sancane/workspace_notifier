@@ -1,3 +1,8 @@
+require 'em-synchrony/activerecord'
+
+class VirtualMachine < ActiveRecord::Base
+end
+
 class Notifier
   public
   def initialize(workspace_id)
@@ -7,15 +12,30 @@ class Notifier
   end
 
   def subscribe(*a, &b)
-    puts "--> TODO: Implement subscribe"
+    @channel.subscribe(*a, &b)
   end
 
   def unsubscribe(name)
-    puts "--> TODO: Implement unsubscribe"
+    @channel.unsubscribe(name)
   end
 
   private
   def check_workspace
-    puts "TODO: Pull data base"
+    EventMachine.synchrony do
+      obj = {
+        "workspace" => @id,
+        "nodes" => []
+      }
+
+      VirtualMachine.find_all_by_workspace_id(@id).each do |vm|
+        obj['nodes'].push({
+          "name" => vm.name,
+          "state" => vm.state
+        })
+      end
+
+      msg = ["event:workspace", "data:#{obj.to_json}\n\n"].join("\n")
+      @channel << msg
+    end
   end
 end

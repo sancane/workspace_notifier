@@ -1,10 +1,6 @@
 $: << File.dirname(__FILE__)
 
 require 'goliath'
-require 'em-synchrony/activerecord'
-
-class VirtualMachine < ActiveRecord::Base
-end
 
 class WorkspaceNotifier < Goliath::API
   include Goliath::Rack::Types
@@ -24,43 +20,12 @@ class WorkspaceNotifier < Goliath::API
     env.notifier.unsubscribe(env['workspace'], env['subscription'])
   end
 
-  def send_message(id, channel)
-    EventMachine.synchrony do
-      obj = {
-        "workspace" => id,
-        "nodes" => []
-      }
-
-      VirtualMachine.find_all_by_workspace_id(id).each do |vm|
-        obj['nodes'].push({
-          "name" => vm.name,
-          "state" => vm.state
-        })
-      end
-
-      msg = ["event:workspace", "data:#{obj.to_json}\n\n"].join("\n")
-      channel << msg
-    end
-  end
-
   def response(env)
     env['workspace'] = params['id']
 
     env['subscription'] = env.notifier.subscribe env['workspace'] do |m|
       env.stream_send(m)
     end
-
-    #if not env.channels[env['workspace']]
-      #env.notifier.subscribe env['workspace'] { |m| puts "hola" }
-      #env.channels[env['workspace']] = EventMachine::Channel.new
-      #env.timers[env['workspace']] = EM.add_periodic_timer(2) do
-      #  send_message(env['workspace'], env.channels[env['workspace']])
-      #end
-    #end
-
-    #env['subscription'] = env.channels[env['workspace']].subscribe do |m|
-    #  env.stream_send(m)
-    #end
 
     streaming_response(200, {'Content-Type' => 'text/event-stream'})
   end
