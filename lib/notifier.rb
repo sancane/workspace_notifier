@@ -39,13 +39,13 @@ class Notifier
     return changes
   end
 
-  def create_json
+  def create_json(node_dict)
     obj = {
       "workspace" => @id,
       "nodes" => []
     }
 
-    @nodes.keys.each do |node|
+    node_dict.keys.each do |node|
       obj['nodes'].push({
         "name" => node,
         "state" => @nodes[node]
@@ -62,9 +62,11 @@ class Notifier
         nodes[vm.name] = vm.state
       end
 
-      update_nodes(nodes)
-      msg = ["event:workspace", "data:#{create_json}\n\n"].join("\n")
-      @channel << msg
+      updated = update_nodes(nodes)
+      if updated.keys.length > 0
+        msg = ["event:workspace", "data:#{create_json(updated)}\n\n"].join("\n")
+        @channel << msg
+      end
     end
   end
 end
