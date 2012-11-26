@@ -4,8 +4,9 @@ class Notifier
   public
   def initialize(workspace_id)
     @id = workspace_id
-    @channel = EventMachine::Channel.new
+    @nodes = {}
     @subs = []
+    @channel = EventMachine::Channel.new
   end
 
   def subscribe(*a, &b)
@@ -26,21 +27,43 @@ class Notifier
   end
 
   private
+  def update_nodes(node_dict)
+    changes = {}
+    node_dict.keys.each do |node|
+      if not @nodes[node] or @nodes[node] != node_dict[node]
+        @nodes[node] = node_dict[node]
+        changes[node] = node_dict[node]
+      end
+    end
+
+    return changes
+  end
+
+  def create_json
+    obj = {
+      "workspace" => @id,
+      "nodes" => []
+    }
+
+    @nodes.keys.each do |node|
+      obj['nodes'].push({
+        "name" => node,
+        "state" => @nodes[node]
+      })
+    end
+
+    obj.to_json
+  end
+
   def check_workspace
     EventMachine.synchrony do
-      obj = {
-        "workspace" => @id,
-        "nodes" => []
-      }
-
+      nodes = {}
       VirtualMachine.find_all_by_workspace_id(@id).each do |vm|
-        obj['nodes'].push({
-          "name" => vm.name,
-          "state" => vm.state
-        })
+        nodes[vm.name] = vm.state
       end
 
-      msg = ["event:workspace", "data:#{obj.to_json}\n\n"].join("\n")
+      update_nodes(nodes)
+      msg = ["event:workspace", "data:#{create_json}\n\n"].join("\n")
       @channel << msg
     end
   end
