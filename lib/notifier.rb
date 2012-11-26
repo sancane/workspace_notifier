@@ -5,22 +5,22 @@ class Notifier
   def initialize(workspace_id)
     @id = workspace_id
     @channel = EventMachine::Channel.new
-    @subs = {}
+    @subs = []
   end
 
   def subscribe(*a, &b)
     name = @channel.subscribe(*a, &b)
-    if @subs.keys.length == 0
+    if @subs.count == 0
       @timer = EM.add_periodic_timer(2) { check_workspace }
     end
-    @subs[name] = false
+    @subs.push(name)
     return name
   end
 
   def unsubscribe(name)
     @channel.unsubscribe(name)
     @subs.delete(name)
-    if @subs.keys.length == 0
+    if @subs.count == 0
       @timer.cancel
     end
   end
