@@ -36,7 +36,7 @@ class WorkspaceNotifier < Goliath::API
         })
       end
 
-      msg = ["event:worspace", "data:#{obj.to_json}\n\n"].join("\n")
+      msg = ["event:workspace", "data:#{obj.to_json}\n\n"].join("\n")
       channel << msg
     end
   end
