@@ -1,3 +1,5 @@
+$: << File.dirname(__FILE__)
+
 require 'goliath'
 require 'em-synchrony/activerecord'
 
@@ -45,15 +47,16 @@ class WorkspaceNotifier < Goliath::API
     env['workspace'] = params['id']
 
     if not env.channels[env['workspace']]
-      env.channels[env['workspace']] = EventMachine::Channel.new
-      env.timers[env['workspace']] = EM.add_periodic_timer(2) do
-        send_message(env['workspace'], env.channels[env['workspace']])
-      end
+      env.notifier.subscribe env['workspace'] { |m| puts "hola" }
+      #env.channels[env['workspace']] = EventMachine::Channel.new
+      #env.timers[env['workspace']] = EM.add_periodic_timer(2) do
+      #  send_message(env['workspace'], env.channels[env['workspace']])
+      #end
     end
 
-    env['subscription'] = env.channels[env['workspace']].subscribe do |m|
-      env.stream_send(m)
-    end
+    #env['subscription'] = env.channels[env['workspace']].subscribe do |m|
+    #  env.stream_send(m)
+    #end
 
     streaming_response(200, {'Content-Type' => 'text/event-stream'})
   end
