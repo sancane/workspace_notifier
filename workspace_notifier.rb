@@ -21,7 +21,7 @@ class WorkspaceNotifier < Goliath::API
                       :root => Goliath::Application.app_path("public")
 
   def on_close(env)
-    env.channels[env['workspace']].unsubscribe(env['subscription'])
+    env.notifier.unsubscribe(env['workspace'], env['subscription'])
   end
 
   def send_message(id, channel)
@@ -46,13 +46,17 @@ class WorkspaceNotifier < Goliath::API
   def response(env)
     env['workspace'] = params['id']
 
-    if not env.channels[env['workspace']]
-      env.notifier.subscribe env['workspace'] { |m| puts "hola" }
+    env['subscription'] = env.notifier.subscribe env['workspace'] do |m|
+      env.stream_send(m)
+    end
+
+    #if not env.channels[env['workspace']]
+      #env.notifier.subscribe env['workspace'] { |m| puts "hola" }
       #env.channels[env['workspace']] = EventMachine::Channel.new
       #env.timers[env['workspace']] = EM.add_periodic_timer(2) do
       #  send_message(env['workspace'], env.channels[env['workspace']])
       #end
-    end
+    #end
 
     #env['subscription'] = env.channels[env['workspace']].subscribe do |m|
     #  env.stream_send(m)

@@ -2,14 +2,19 @@ require 'lib/notifier'
 
 class NotifyHandler
   def initialize
-    @subs = {}
+    @watchers = {}
   end
 
   def subscribe(workspace_id, *a, &b)
-    puts "TODO: Implement subscribe for #{workspace_id}"
+    if not @watchers[workspace_id]
+      @watchers[workspace_id] = Notifier.new(workspace_id)
+    end
+
+    @watchers[workspace_id].subscribe(*a, &b)
   end
 
   def unsubscribe(workspace_id, name)
-    puts "TODO: Implement unsubscribe"
+    return if not @watchers[workspace_id]
+    @watchers[workspace_id].unsubscribe(name)
   end
 end
