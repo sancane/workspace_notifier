@@ -15,6 +15,15 @@ class Notifier
       @timer = EM.add_periodic_timer(2) { check_workspace }
     end
     @subs.push(name)
+
+    if @nodes.keys.length > 0
+      EM.next_tick do
+        # Send the whole workspace state to the new client
+        cb = EM::Callback(*a, &b)
+        cb.call(create_event(@nodes))
+      end
+    end
+
     return name
   end
 
@@ -55,6 +64,10 @@ class Notifier
     obj.to_json
   end
 
+  def create_event(nodes)
+    ["event:workspace", "data:#{create_json(nodes)}\n\n"].join("\n")
+  end
+
   def check_workspace
     EventMachine.synchrony do
       nodes = {}
@@ -64,8 +77,8 @@ class Notifier
 
       updated = update_nodes(nodes)
       if updated.keys.length > 0
-        msg = ["event:workspace", "data:#{create_json(updated)}\n\n"].join("\n")
-        @channel << msg
+        # Send updated nodes to all clients
+        @channel << create_event(updated)
       end
     end
   end
