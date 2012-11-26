@@ -21,7 +21,6 @@ class Notifier
     @channel.unsubscribe(name)
     @subs.delete(name)
     if @subs.keys.length == 0
-      puts "Removing timer"
       @timer.cancel
     end
   end
