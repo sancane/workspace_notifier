@@ -1,7 +1,4 @@
-require 'em-synchrony/activerecord'
-
-class VirtualMachine < ActiveRecord::Base
-end
+require 'app/models/virtual_machine'
 
 class Notifier
   public
