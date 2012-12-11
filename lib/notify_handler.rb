@@ -17,4 +17,11 @@ class NotifyHandler
     return if not @watchers[workspace_id]
     @watchers[workspace_id].unsubscribe(name)
   end
+
+  def notify(event)
+    #TODO: Extract workspace_id from event
+    workspace_id = 1
+    return if not @watchers[workspace_id]
+    @watchers[workspace_id].send(event)
+  end
 end

@@ -26,6 +26,5 @@ queue = channel.queue("netlab.events.workspace", :auto_delete => true)
 exchange = channel.direct("")
 
 queue.subscribe do |msg|
-  # Parse event and send notification
-  puts "Received a message: #{msg}."
+  config['notifier'].notify(msg)
 end

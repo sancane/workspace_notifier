@@ -35,6 +35,10 @@ class Notifier
     end
   end
 
+  def send(event)
+    puts "Received event from RabbitMQ channel #{event}"
+  end
+
   private
   def update_nodes(node_dict)
     changes = {}
