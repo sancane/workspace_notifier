@@ -25,6 +25,13 @@ channel = AMQP::Channel.new(connection)
 queue = channel.queue("netlab.events.workspace", :auto_delete => true)
 exchange = channel.direct("")
 
-queue.subscribe do |msg|
-  config['notifier'].notify(msg)
+queue.subscribe do |headers, payload|
+  begin
+    logger.info "Received #{payload}"
+    event = JSON.parse(payload)
+    config['notifier'].notify(event)
+  rescue Exception => e
+    logger.info(e.message)
+    logger.info(e.backtrace)
+  end
 end

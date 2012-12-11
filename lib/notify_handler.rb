@@ -19,8 +19,7 @@ class NotifyHandler
   end
 
   def notify(event)
-    #TODO: Extract workspace_id from event
-    workspace_id = 1
+    workspace_id = event["workspace"]
     return if not @watchers[workspace_id]
     @watchers[workspace_id].send(event)
   end
