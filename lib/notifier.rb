@@ -36,7 +36,12 @@ class Notifier
   end
 
   def send(event)
-    puts "Received event from RabbitMQ channel #{event}"
+    nodes = {}
+    event["nodes"].each do |vm|
+      nodes[vm["name"]] = vm["state"]
+    end
+
+    notify(nodes)
   end
 
   private
@@ -72,6 +77,14 @@ class Notifier
     ["event:workspace", "data:#{create_json(nodes)}\n\n"].join("\n")
   end
 
+  def notify(nodes)
+    updated = update_nodes(nodes)
+    if updated.keys.length > 0
+      # Send updated nodes to all clients
+      @channel << create_event(updated)
+    end
+  end
+
   def check_workspace
     EventMachine.synchrony do
       nodes = {}
@@ -79,11 +92,7 @@ class Notifier
         nodes[vm.name] = vm.state
       end
 
-      updated = update_nodes(nodes)
-      if updated.keys.length > 0
-        # Send updated nodes to all clients
-        @channel << create_event(updated)
-      end
+      notify(nodes)
     end
   end
 end
