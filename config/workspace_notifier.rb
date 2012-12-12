@@ -22,8 +22,9 @@ amqp_config = {
 
 connection = AMQP.connect(amqp_config)
 channel = AMQP::Channel.new(connection)
-queue = channel.queue("netlab.events.workspace", :auto_delete => true)
-exchange = channel.direct("")
+
+exchange = channel.fanout("netlab.events.workspace")
+queue = channel.queue("", :exclusive => true, :auto_delete => true).bind(exchange)
 
 queue.subscribe do |headers, payload|
   begin
