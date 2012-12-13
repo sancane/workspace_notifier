@@ -28,7 +28,6 @@ queue = channel.queue("", :exclusive => true, :auto_delete => true).bind(exchang
 
 queue.subscribe do |headers, payload|
   begin
-    logger.info "Received #{payload}"
     event = JSON.parse(payload)
     config['notifier'].notify(event)
   rescue Exception => e
