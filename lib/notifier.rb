@@ -1,4 +1,5 @@
-require 'app/models/virtual_machine'
+require 'amqp'
+require 'json'
 
 class Notifier
   public
@@ -7,13 +8,11 @@ class Notifier
     @nodes = {}
     @subs = []
     @channel = EventMachine::Channel.new
+    get_workspace
   end
 
   def subscribe(*a, &b)
     name = @channel.subscribe(*a, &b)
-    if @subs.count == 0
-      @timer = EM.add_periodic_timer(2) { check_workspace }
-    end
     @subs.push(name)
 
     if @nodes.keys.length > 0
@@ -30,9 +29,6 @@ class Notifier
   def unsubscribe(name)
     @channel.unsubscribe(name)
     @subs.delete(name)
-    if @subs.count == 0
-      @timer.cancel
-    end
   end
 
   def send(event)
@@ -45,6 +41,32 @@ class Notifier
   end
 
   private
+  def get_workspace
+    chann = AMQP::Channel.new
+    reply_queue = chann.queue("", :exclusive => true, :auto_delete => true) do |queue|
+      chann.default_exchange.publish(@id.to_s,
+        :routing_key => "netlab.services.workspace.state",
+        :message_id => Kernel.rand(10101010).to_s,
+        :reply_to => queue.name)
+    end
+
+    reply_queue.subscribe do |metadata, payload|
+      begin
+        puts "[response] Response for #{payload}"
+        reply = JSON.parse(payload)
+        raise if reply["workspace"] != @id.to_s
+        puts reply["nodes"]
+        notify(reply["nodes"])
+      rescue Exception => e
+        puts e.message
+        puts e.backtrace
+        #TODO: Send error notification to all clients
+      ensure
+        chann.close
+      end
+    end
+  end
+
   def update_nodes(node_dict)
     changes = {}
     node_dict.keys.each do |node|
@@ -82,17 +104,6 @@ class Notifier
     if updated.keys.length > 0
       # Send updated nodes to all clients
       @channel << create_event(updated)
-    end
-  end
-
-  def check_workspace
-    EventMachine.synchrony do
-      nodes = {}
-      VirtualMachine.find_all_by_workspace_id(@id).each do |vm|
-        nodes[vm.name] = vm.state
-      end
-
-      notify(nodes)
     end
   end
 end

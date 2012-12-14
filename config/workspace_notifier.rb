@@ -1,16 +1,7 @@
-require 'mysql2'
 require 'amqp'
 require 'lib/notify_handler'
 
 config['notifier'] = NotifyHandler.new
-
-# Database configuration
-ActiveRecord::Base.establish_connection(:adapter  => 'em_mysql2',
-                                        :database => 'your database',
-                                        :username => 'user',
-                                        :password => 'password',
-                                        :host     => 'host',
-                                        :pool     => 5)
 
 # AMQP configuration
 amqp_config = {
