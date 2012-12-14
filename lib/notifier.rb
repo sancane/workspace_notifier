@@ -32,12 +32,7 @@ class Notifier
   end
 
   def send(event)
-    nodes = {}
-    event["nodes"].each do |vm|
-      nodes[vm["name"]] = vm["state"]
-    end
-
-    notify(nodes)
+    send_notification(event["nodes"])
   end
 
   private
@@ -55,8 +50,7 @@ class Notifier
         puts "[response] Response for #{payload}"
         reply = JSON.parse(payload)
         raise if reply["workspace"] != @id.to_s
-        puts reply["nodes"]
-        notify(reply["nodes"])
+        send_notification(reply["nodes"])
       rescue Exception => e
         puts e.message
         puts e.backtrace
@@ -99,11 +93,20 @@ class Notifier
     ["event:workspace", "data:#{create_json(nodes)}\n\n"].join("\n")
   end
 
-  def notify(nodes)
-    updated = update_nodes(nodes)
+  def notify(node_dict)
+    updated = update_nodes(node_dict)
     if updated.keys.length > 0
       # Send updated nodes to all clients
       @channel << create_event(updated)
     end
+  end
+
+  def send_notification(nodes)
+    nodes_dict = {}
+    nodes.each do |vm|
+      nodes_dict[vm["name"]] = vm["state"]
+    end
+
+    notify(nodes_dict)
   end
 end
