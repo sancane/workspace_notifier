@@ -22,7 +22,7 @@ queue.subscribe do |headers, payload|
     event = JSON.parse(payload)
     config['notifier'].notify(event)
   rescue Exception => e
-    logger.info(e.message)
-    logger.info(e.backtrace)
+    logger.error(e.message)
+    logger.error(e.backtrace)
   end
 end
