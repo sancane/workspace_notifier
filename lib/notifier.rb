@@ -49,7 +49,7 @@ class Notifier
       begin
         puts "[response] Response for #{payload}"
         reply = JSON.parse(payload)
-        raise if reply["workspace"] != @id.to_s
+        raise if reply["workspace"] != @id
         send_notification(reply["nodes"])
       rescue Exception => e
         puts e.message
