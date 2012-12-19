@@ -40,7 +40,7 @@ class Notifier
     chann = AMQP::Channel.new
     reply_queue = chann.queue("", :exclusive => true, :auto_delete => true) do |queue|
       chann.default_exchange.publish(@id.to_s,
-        :routing_key => "netlab.services.workspace.state",
+        :routing_key => "netlab.services.#{Goliath::env}.workspace.state",
         :message_id => Kernel.rand(10101010).to_s,
         :reply_to => queue.name)
     end
