@@ -36,6 +36,22 @@ class Notifier
   end
 
   private
+  def listen_to_events
+    @amqp_chan = AMQP::Channel.new
+    name = "netlab.events.#{Goliath::env}.workspace.#{@id}"
+    @exchange = @amqp_chan.direct(name)
+    @queue = @amqp_chan.queue("", :exclusive => true, :auto_delete => true).bind(@exchange)
+
+    @queue.subscribe do |headers, payload|
+      begin
+        event = JSON.parse(payload)
+        send_notification(event["nodes"])
+      rescue Exception
+        # Ignore it
+      end
+    end
+  end
+
   def get_workspace
     tmp_chann = AMQP::Channel.new
     reply_queue = tmp_chann.queue("", :exclusive => true, :auto_delete => true) do |queue|
@@ -52,6 +68,7 @@ class Notifier
         reply = JSON.parse(payload)
         raise if reply["workspace"] != @id
         send_notification(reply["nodes"])
+        listen_to_events
       rescue Exception => e
         puts e.message
         puts e.backtrace
