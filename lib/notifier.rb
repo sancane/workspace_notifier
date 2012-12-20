@@ -31,10 +31,6 @@ class Notifier
     @subs.delete(name)
   end
 
-  def send(event)
-    send_notification(event["nodes"])
-  end
-
   private
   def listen_to_events
     @amqp_chan = AMQP::Channel.new
