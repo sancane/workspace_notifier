@@ -42,6 +42,7 @@ class Notifier
       chann.default_exchange.publish(@id.to_s,
         :routing_key => "netlab.services.#{Goliath::env}.workspace.state",
         :message_id => Kernel.rand(10101010).to_s,
+        :persistent => true,
         :reply_to => queue.name)
     end
 
